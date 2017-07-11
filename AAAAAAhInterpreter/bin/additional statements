@@ -1,0 +1,24 @@
+While 循环、 For循环均可模仿IF ELSE ENDIF实现
+
+While 匹配  EndWhile
+For 匹配 EndFor
+
+遇到While
+若While 条件为真，顺序执行
+若While 条件为假，pos跳至 EndWhile.pos+1
+
+遇到EndWhile
+若 条件为真，跳到While后
+若条件为假，顺序执行
+
+
+遇到For
+若For (赋值语句执行完毕后将所有Token.tag置为NONE;contion();相关Token insert至Endfor之前，此行为不会改变EndFor的pos;)
+若条件为真，顺序执行
+若For 条件为假，pos跳至 EndFor.pos+1
+
+遇到EndFor
+若条件为真，跳到For后
+若条件为假，顺序执行
+
+
