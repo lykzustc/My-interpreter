@@ -8,8 +8,8 @@ For 匹配 EndFor
 若While 条件为假，pos跳至 EndWhile.pos+1
 
 遇到EndWhile
-若 条件为真，跳到While后
-若条件为假，顺序执行
+跳到While后
+
 
 
 遇到For
@@ -18,7 +18,85 @@ For 匹配 EndFor
 若For 条件为假，pos跳至 EndFor.pos+1
 
 遇到EndFor
-若条件为真，跳到For后
-若条件为假，顺序执行
+跳到For后
 
+public interface Expression
+	{
+		// this returns us a Value, which can be of either type String or int
+		Value evaluate();
+	}
+	
+	public class Variable implements Expression
+	{
+		private String var;
+		public Variable(String var)
+		{
+			this.var = var;
+		}
 
+		public Value evaluate()
+		{
+			// if the variable is in our variable hashmap, return it
+			if(variables.containsKey(var.toLowerCase()))
+			{
+				return variables.get(var.toLowerCase());
+			}
+			// otherwise gen a new one
+			return new IntType(0);
+		}
+		public String getVar()
+		{
+			return var;
+		}
+	}
+
+public interface Value extends Expression
+	{
+		String toString();
+		int toInt();
+	}
+
+	// this defines our int datatype
+	class IntType implements Value
+	{
+		private int value;
+		public IntType ( int v )
+		{
+			this.value = v;
+		}
+
+		public String toString()
+		{
+			return Integer.toString(value);
+		}
+		public int toInt()
+		{
+			return value;
+		}
+		public Value evaluate()
+		{		
+			return this;
+		}
+	}
+
+	// this defines our string datatype
+	class StringType implements Value
+	{
+		private String value;
+		public StringType ( String v )
+		{
+			this.value = v;
+		}
+		public String toString()
+		{
+			return value;
+		}
+		public int toInt()
+		{
+			return Integer.parseInt(value);
+		}
+		public Value evaluate()
+		{
+			return this;
+		}
+	}

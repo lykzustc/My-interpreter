@@ -15,12 +15,15 @@ import java.io.*;
  */
 public class TheScan
 {
+	final int REDUNDANTEQ = 0;
+	final int STRINGNOTEND = 1;
+	
 	// global tokenized list
 	private ArrayList<Token> tokens = new ArrayList<Token>();
 
 	// list of all our possible operators
 	private ArrayList<Character> operators = new ArrayList<Character>(
-			Arrays.asList('(', ')', '+', '-', '*', '%', '/', '=',
+			Arrays.asList('(', ')', '+', '-', '*', '%', '/',
 						  '<', '>'));
 
 	// untokenized data
@@ -32,19 +35,24 @@ public class TheScan
 		// store a copy of the text
 		this.data = text;
 
-		// start the interpreter 
-		interpret();
+		// start the interpreter
+		try{
+			interpret();
+		} catch (InterpreterException e){
+			System.err.println("EXCEPTION IN TOKENIZING");
+			e.printStackTrace();
+		}
+		
 	}
 	
 	// this is the 'main'; it inits tokenization and executes
 	// statements
 	@SuppressWarnings("unused")
-	private void interpret()
-	{
-		// tokenize the file 
+	private void interpret() throws Exception
+	{		
 		tokenize();
 		
-		// dbg
+		// print the tokens
 		printer();
 
 		// call the parser and pass it the tokenized list
@@ -87,9 +95,6 @@ public class TheScan
 			case '>':
 				tag = TokenTag.GT;
 				break;
-			case '=':
-				tag = TokenTag.ASSIGN;
-				break;
 			default:
 				return;
 		}
@@ -100,7 +105,7 @@ public class TheScan
 	// this takes the local content string and tokenizes
 	// it into a list, which we use later in the AST
 	@SuppressWarnings("incomplete-switch")
-	private void tokenize()
+	private void tokenize() throws InterpreterException
 	{
 		// initialize the tag we're working on parsing
 		TokenTag tag = TokenTag.NONE;
@@ -125,10 +130,13 @@ public class TheScan
 			// if it's an operator, go figure out what it is
 			else if ( operators.contains(c))
 			{
-				tag = TokenTag.OP;
+				tag = TokenTag.OP;			
+			}
+			else if ( c == '=' ){
+				tag = TokenTag.ASSIGN;
 			}
 			
-			// if it's a digit and we're not parsing anything in particular atm
+			// if it's a digit and we're not parsing anything in particular stm
 			else if ( tag == TokenTag.NONE && Character.isDigit(c))
 			{
 				tag = TokenTag.INT;
@@ -144,13 +152,36 @@ public class TheScan
 			//System.out.println ( "preprocessing " + c + " with tag " + tag);
 			// switch on the current tag and do some parsin'
 			switch ( tag )
-			{
-				case OP:
-					addOperator(c);
-					current = "";
-					tag = TokenTag.NONE;
-					break;
-				case INT:
+			{				
+			case OP:
+				addOperator(c);
+				current = "";
+				tag = TokenTag.NONE;
+				break;
+			case ASSIGN:
+				char tmpe1 = '0';
+				char tmpe2 = '0';
+				if (i+1 < data.length()){
+					tmpe1 = data.charAt(i+1);
+				}
+				if (i+2 < data.length()){
+					tmpe2 = data.charAt(i+2);
+				}
+				if (tmpe1 == '=' && tmpe2 == '='){
+					handlerError(REDUNDANTEQ);
+				}else{
+					if (tmpe1 == '='){
+						tokens.add(new Token("==", TokenTag.EQ));
+						tag = TokenTag.NONE;
+						i++;
+					} else {
+						tokens.add(new Token("=",TokenTag.ASSIGN));
+						tag = TokenTag.NONE;
+					}
+				}				
+				break;
+
+			case INT:
 					if ( Character.isDigit(c))
 					{
 						// consume them digits
@@ -183,7 +214,7 @@ public class TheScan
 						current = "";
 						tag = TokenTag.NONE;
 					}
-					else if ( current.equalsIgnoreCase("Print"))
+					else if ( current.equalsIgnoreCase("PRINT"))
 					{
 						//add 'Print' token
 						tokens.add(new Token(current, TokenTag.PRINT));
@@ -247,8 +278,7 @@ public class TheScan
 						tag = TokenTag.NONE;	
 					}
 					catch (Exception e){
-						System.out.println("You've misenterd unpaird quotation marks");
-						e.printStackTrace();
+						handlerError(STRINGNOTEND);
 					}
 					break;
 			}
@@ -263,5 +293,14 @@ public class TheScan
 			System.out.println ( s.getValue().toString() + " : " + s.getTag() );
 		}
 		System.out.println("========FILE TOKENS END==========");
+	}
+	
+	private void handlerError(int error) throws InterpreterException{
+		String[] err = {
+			" REDUNDANT ===, CAN'T DISTINGUISH '==='",
+			" YOU DIDN'T END A STRING"
+		};
+		
+		throw new InterpreterException(err[error]);
 	}
 }

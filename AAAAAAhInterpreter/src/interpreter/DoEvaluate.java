@@ -14,7 +14,9 @@ import interpreter.Parser;
 
 public class DoEvaluate {
 	
-
+	final int UNINITIALIZEDVAR = 9;
+	final int OPERATORMISSING = 11;
+	final int OPERATORREDUNDANT = 12;
 
 	private Stack<Integer> theStack;
 	private ArrayList<Token> postfixtokens;
@@ -24,11 +26,11 @@ public class DoEvaluate {
 	}
 	
 	
-	public int evaluate(){
+	public int evaluate() throws InterpreterException{
 		theStack = new Stack<>();
 		Token t;
 		int j;
-		int num1, num2, interAns;
+		int num1=0, num2=0, interAns;
 		
 		for (j=0; j<postfixtokens.size(); j++){
 			t = postfixtokens.get(j);
@@ -41,15 +43,17 @@ public class DoEvaluate {
 						theStack.push(Parser.variables.get(t.getValue()));
 					}
 					else{
-						//the default value for unassigned variable is 0;
-						theStack.push(0);
+						Parser.handlerError(UNINITIALIZEDVAR);
 					}
 				}
 			}
 			else{
-				num2 = theStack.pop();
-				num1 = theStack.pop();
-				
+				try{
+					num2 = theStack.pop();
+					num1 = theStack.pop();
+				}catch(Exception e){
+					Parser.handlerError(OPERATORREDUNDANT);
+				}
 				switch(t.getTag()){
 				case PLUS:
 					interAns = num1 + num2;
@@ -73,7 +77,9 @@ public class DoEvaluate {
 			}
 		}
 		interAns = theStack.pop();
-		
+		if (!theStack.isEmpty()){
+			Parser.handlerError(OPERATORMISSING);
+		}
 		return interAns;
 	}
 }
